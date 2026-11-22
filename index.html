@@ -258,30 +258,44 @@
       /* The main page is a fixed one-frame layout: the shell is
          exactly the viewport height and never scrolls. The warrior
          hero holds its full presence at a fixed share of the frame
-         — 57dvh, inside Elias's 55–60% band — and NEVER flexes or
-         shrinks to make room. The one-frame fit comes from the
-         CARD UNDERNEATH instead: the level/stat block below the
-         hero is compacted (tighter padding, tighter stat-row
-         spacing, tighter scrubber margins) so hero (57dvh) +
-         compact card + tab bar fit the viewport with no scrolling. */
+         — 65dvh — and NEVER flexes or shrinks to make room. The
+         one-frame fit comes from the CARD UNDERNEATH instead: the
+         level/stat block below the hero is compacted further
+         (tighter padding, a slightly smaller level numeral/piece,
+         tighter stat-row spacing, tighter scrubber margins) so
+         hero (65dvh) + compact card + tab bar fit the viewport
+         with no scrolling. */
       .app-shell.home-fixed { height: 100dvh; min-height: 0; overflow: hidden; }
-      .home-fixed .app-main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+      .home-fixed .app-main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding-bottom: 8px; }
       .armor-home { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-      .armor-home .hero-wrap { flex: 0 0 57dvh; height: 57dvh; min-height: 0; display: flex; flex-direction: column; }
+      /* Breathing room around the warrior: the hero no longer
+         bleeds flush to the top — margin-top -8px (against the
+         app-main 20px top padding) leaves a 12px gap above him,
+         and the level card below keeps a 6px gap under him. The
+         hero box itself stays 65dvh; the gaps are funded by the
+         card compaction below (smaller numeral, tighter scrubber)
+         and the reduced bottom padding above, so the one-frame
+         no-scroll fit still holds. */
+      .armor-home .hero-wrap { flex: 0 0 65dvh; height: 65dvh; min-height: 0; display: flex; flex-direction: column; margin: -8px -20px 0; padding-top: 6px; }
       .armor-home .hero-btn { flex: 1 1 auto; min-height: 0; }
       .armor-home .hero-stage { height: 100%; }
       .armor-home .spin-hint { flex: 0 0 auto; margin-top: 2px; }
       .armor-home #home-reveal { flex: 1 1 auto; min-height: 0; }
       /* Compact card underneath the hero (home only): tighter
-         level-block padding, tighter stat rows, tighter scrubber. */
-      .armor-home .level-block { margin-top: 2px; padding: 4px 76px 4px 4px; }
-      .armor-home .level-block-text { padding-bottom: 2px; }
-      .armor-home .level-block-chev { padding-bottom: 4px; }
-      .armor-home .level-left .level-block-kicker { margin-bottom: 4px; }
-      .armor-home .stat-rows { margin-top: 2px !important; }
-      .armor-home .stat-row { padding: 3px 0; }
-      .armor-home .build-scrubber-wrap { margin-top: 8px; }
-      .armor-home .build-scrubber-labels { margin-top: 4px; }
+         level-block padding, tighter stat rows, tighter scrubber.
+         The TODAY / STREAK / XP rows sit as one tight block —
+         minimal vertical padding between them. */
+      .armor-home .level-block { margin-top: 6px; padding: 2px 76px 2px 4px; }
+      .armor-home .level-num { font-size: 70px; }
+      .armor-home .level-block-text { padding-bottom: 0; }
+      .armor-home .level-block-chev { padding-bottom: 2px; }
+      .armor-home .level-left .level-block-kicker { margin-bottom: 2px; }
+      .armor-home .level-block-piece { font-size: 20px; margin-top: 2px; }
+      .armor-home .level-block-verse { margin-top: 1px; }
+      .armor-home .stat-rows { margin-top: 0 !important; }
+      .armor-home .stat-row { padding: 1px 0; line-height: 1.2; }
+      .armor-home .build-scrubber-wrap { margin-top: 2px; }
+      .armor-home .build-scrubber-labels { margin-top: 2px; }
       .hero-btn { display: block; width: 100%; text-align: left; padding: 0; }
       .hero-stage { position: relative; height: 500px; overflow: hidden; }
       .hero-halo { pointer-events: none; position: absolute; left: 50%; top: 13%; z-index: 0; aspect-ratio: 1; height: 46%; border-radius: 999px; background: radial-gradient(circle, rgba(205,210,220,0.13) 0%, rgba(205,210,220,0.05) 45%, rgba(205,210,220,0) 70%); filter: blur(8px); }
