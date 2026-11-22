@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#000000" />
     <!-- The final glossy TRAKR app icon (glossy black rounded
          square, twin vibrant red stripes, angular white TRAKR
          with thick white underline, nose-down jet, five tiny
@@ -298,7 +299,14 @@
       .armor-home .build-scrubber-labels { margin-top: 2px; }
       .hero-btn { display: block; width: 100%; text-align: left; padding: 0; }
       .hero-stage { position: relative; height: 500px; overflow: hidden; }
-      .hero-halo { pointer-events: none; position: absolute; left: 50%; top: 13%; z-index: 0; aspect-ratio: 1; height: 46%; border-radius: 999px; background: radial-gradient(circle, rgba(205,210,220,0.13) 0%, rgba(205,210,220,0.05) 45%, rgba(205,210,220,0) 70%); filter: blur(8px); }
+      /* The warrior's glow CIRCLES OUT: a true radial circle whose
+         fade reaches pure black well before the stage's top edge
+         (center 15% down, radius 21%, fully transparent by 62% of
+         the radius — even at the breathe animation's peak scale),
+         so the stage's overflow clip never cuts living glow and no
+         hard line shows under the phone's banner; pure black runs
+         from the glow's fade-out up through the safe area. */
+      .hero-halo { pointer-events: none; position: absolute; left: 50%; top: 15%; z-index: 0; aspect-ratio: 1; height: 42%; border-radius: 999px; background: radial-gradient(circle, rgba(205,210,220,0.13) 0%, rgba(205,210,220,0.05) 38%, rgba(205,210,220,0) 62%); filter: blur(8px); }
       .hero-pool { pointer-events: none; position: absolute; bottom: 1%; left: 50%; z-index: 0; height: 11%; width: 74%; transform: translateX(-50%); border-radius: 999px; background: radial-gradient(ellipse, rgba(205,210,220,0.07) 0%, rgba(205,210,220,0) 70%); filter: blur(10px); }
       .hero-img-wrap { position: absolute; left: 50%; top: 0; z-index: 10; height: 100%; transform: translateX(-50%); touch-action: pan-y; }
       .hero-img-wrap img { height: 100%; width: 100%; object-fit: cover; user-select: none; display: block; }
@@ -338,7 +346,7 @@
       .toast-sub { margin-top: 2px; display: block; font-size: 12px; font-weight: 600; line-height: 1.45; color: var(--lavdim); }
       .toast-check { margin-left: auto; display: flex; height: 32px; width: 32px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 999px; }
       .toast-check svg { width: 16px; height: 16px; }
-      .hero-backlight { pointer-events: none; position: absolute; inset: 0; z-index: 15; background: radial-gradient(ellipse 52% 30% at 50% 16%, rgba(210,214,224,0.07) 0%, rgba(210,214,224,0) 70%); mix-blend-mode: screen; }
+      .hero-backlight { pointer-events: none; position: absolute; inset: 0; z-index: 15; background: radial-gradient(ellipse 52% 26% at 50% 21%, rgba(210,214,224,0.07) 0%, rgba(210,214,224,0) 62%); mix-blend-mode: screen; }
       .hero-shadow { pointer-events: none; position: absolute; bottom: 3.5%; left: 50%; z-index: 15; height: 5%; width: 48%; transform: translateX(-50%); border-radius: 999px; opacity: 0.6; background: radial-gradient(ellipse, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 70%); filter: blur(6px); }
       .hero-melt { pointer-events: none; position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 128px; background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%); }
       .hero-fade2 { pointer-events: none; position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 96px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%); }
