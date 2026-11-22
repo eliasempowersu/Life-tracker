@@ -502,8 +502,14 @@
       .entry-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
       .entry-frame { position: relative; width: min(100%, 56.49dvh); aspect-ratio: 1184 / 2096; transition: opacity 700ms ease; }
       .entry-frame > img.art { position: absolute; inset: 0; height: 100%; width: 100%; object-fit: cover; user-select: none; display: block; }
-      .entry-glyph { position: absolute; display: block; aspect-ratio: 1; }
-      .entry-glyph svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
+      /* Resting on the wing the glyphs are PAINTED ON: faded back
+         (reduced opacity, slightly greyed white, NO drop shadow)
+         so they blend into the wing surface like worn painted
+         markings instead of bright stickers stuck on top. The
+         flying copies (.entry-fly) stay full-strength white —
+         they lift off the surface. */
+      .entry-glyph { position: absolute; display: block; aspect-ratio: 1; opacity: 0.8; }
+      .entry-glyph svg { display: block; width: 100%; height: 100%; }
       .entry-fly { position: absolute; left: 0; top: 0; display: block; will-change: transform, opacity; }
       .entry-fly svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
       .entry-arrive-pill { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.55); padding: 4px 14px; box-shadow: 0 10px 15px rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
@@ -1443,21 +1449,31 @@
         '<path d="M21.5 29.5L22.5 38L19 44L22.8 44L24 40.5L25.2 44L29 44L25.5 38L26.5 29.5L21.5 29.5Z" />',
       fun: '<path fill-rule="evenodd" d="M5 33L6.5 25.5C7 23 8.5 21.8 11 21.2L16.5 20.5L21 13.5C22 11.8 23.8 11 26 11L32 11C34.5 11 36.5 12.2 37.8 14.3L40 18.5L42.5 21C44.3 21.5 45.5 23 45.5 25L45.5 33L39.5 33A5.5 5.5 0 0 0 28.5 33L19.5 33A5.5 5.5 0 0 0 8.5 33L5 33ZM22.5 14.5L27 14.5C29 14.5 30.5 15.3 31.5 17L33 19.8L21 19.8L22.5 14.5Z" />'
     };
-    function wingGlyphSVG(id, size) {
-      return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" fill="#ffffff" aria-hidden="true" style="display:block">' + (WING_GLYPHS[id] || "") + "</svg>";
+    function wingGlyphSVG(id, size, painted) {
+      /* Painted-on copies (the ones resting on the wing) use a
+         slightly greyed white so the paint reads weathered into
+         the surface; flying copies stay pure white. */
+      var fill = painted ? "#e9ebee" : "#ffffff";
+      return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" fill="' + fill + '" aria-hidden="true" style="display:block">' + (WING_GLYPHS[id] || "") + "</svg>";
     }
     /* The five glyphs rest on the jet's right wing as SMALL
        markings — each only ~4.4% of the frame wide — in one even
-       row along the wing panel's centre line, from the fuselage
-       out to the tip, each tilted by the wing's slant (~15°).
-       Positions are fractions of the art frame (the frame is
-       sized to the art's exact 1184×2096 aspect). */
+       row HUGGING THE WING'S BOTTOM (TRAILING) EDGE, following
+       its slant. Measured off the art: the trailing edge runs
+       from ~(63%, 41.4%) at the root to ~(91%, 36.7%) at the
+       tip; each glyph centre sits ~1.9% of frame height above
+       that line, so the glyph's lower edge rests just inside
+       the wing's edge. Each glyph is tilted by the edge's own
+       slant (~17°). Positions are fractions of the art frame
+       (the frame is sized to the art's exact 1184×2096 aspect).
+       The train measures these resting slots live, so its
+       departures start from the same bottom-edge positions. */
     var WING_POINTS = [
-      { x: 66.5, y: 38.3 }, { x: 71.5, y: 37.55 }, { x: 76.5, y: 36.8 },
-      { x: 81.5, y: 36.05 }, { x: 86.5, y: 35.3 }
+      { x: 66.5, y: 39.0 }, { x: 71.5, y: 38.1 }, { x: 76.5, y: 37.25 },
+      { x: 81.5, y: 36.4 }, { x: 86.5, y: 35.55 }
     ];
     var WING_ICON_PCT = 4.4;
-    var WING_TILT = -15;
+    var WING_TILT = -17;
 
     /* ---------------- spin physics (mirrors ui.tsx useSpinPhysics) ---------------- */
     var PX_PER_VIEW = 110;
@@ -1989,7 +2005,7 @@
     function entryHTML() {
       var glyphs = TRACKERS.map(function (def, i) {
         var p = WING_POINTS[i];
-        return '<span class="entry-glyph" data-wing-slot="' + i + '" aria-hidden="true" style="left:' + p.x + "%;top:" + p.y + "%;width:" + WING_ICON_PCT + "%;transform:translate(-50%,-50%) rotate(" + WING_TILT + 'deg)">' + wingGlyphSVG(def.id, "100%") + "</span>";
+        return '<span class="entry-glyph" data-wing-slot="' + i + '" aria-hidden="true" style="left:' + p.x + "%;top:" + p.y + "%;width:" + WING_ICON_PCT + "%;transform:translate(-50%,-50%) rotate(" + WING_TILT + 'deg)">' + wingGlyphSVG(def.id, "100%", true) + "</span>";
       }).join("");
       return '<div class="entry-overlay" id="entry-overlay" role="button" aria-label="TRAKR — Life in Progress. The entrance plays on its own; tap to skip it and open the Faith tracker.">' +
         '<div class="entry-backdrop" id="entry-backdrop"></div>' +
