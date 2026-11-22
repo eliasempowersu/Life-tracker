@@ -255,6 +255,19 @@
 
       /* ---------- armor home ---------- */
       .hero-wrap { position: relative; margin: -20px -20px 0; }
+      /* The main page is a fixed one-frame layout: the shell is
+         exactly the viewport height and never scrolls; the hero
+         flexes to absorb whatever height is left after the level
+         block, stat rows, build scrubber and tab bar take theirs,
+         so everything is on screen at once at any phone height. */
+      .app-shell.home-fixed { height: 100dvh; min-height: 0; overflow: hidden; }
+      .home-fixed .app-main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+      .armor-home { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+      .armor-home .hero-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+      .armor-home .hero-btn { flex: 1 1 auto; min-height: 0; }
+      .armor-home .hero-stage { height: 100%; }
+      .armor-home .spin-hint { flex: 0 0 auto; }
+      .armor-home #home-reveal { flex: 0 0 auto; }
       .hero-btn { display: block; width: 100%; text-align: left; padding: 0; }
       .hero-stage { position: relative; height: 500px; overflow: hidden; }
       .hero-halo { pointer-events: none; position: absolute; left: 50%; top: 13%; z-index: 0; aspect-ratio: 1; height: 46%; border-radius: 999px; background: radial-gradient(circle, rgba(205,210,220,0.13) 0%, rgba(205,210,220,0.05) 45%, rgba(205,210,220,0) 70%); filter: blur(8px); }
@@ -2069,7 +2082,12 @@
     }
 
     function mainAppHTML(data) {
-      var html = '<div class="app-shell">';
+      /* The Faith home (Armor tab, not the detail view) is a
+         fixed one-frame page: its shell locks to the viewport
+         height and never scrolls. Every other view keeps the
+         normal scrolling shell. */
+      var isArmorHome = ui.tracker === "faith" && ui.faithView === "tracker" && ui.tab === "armor" && !ui.armorDetail;
+      var html = '<div class="app-shell' + (isArmorHome ? " home-fixed" : "") + '">';
       /* The pill renders only once the entry is done — during
          the entry the overlay carries the pill's dock (the train
          flies into it, then the overlay's own pill settles
@@ -2251,7 +2269,7 @@
       var buildStepsFilled = (stats.level - 1) * STEPS_PER_PIECE + stepsIntoPiece;
       var buildStepsTotal = LEVELS.length * STEPS_PER_PIECE;
 
-      var html = '<div class="anim-rise">';
+      var html = '<div class="anim-rise armor-home">';
       /* Hero block: bleeds to the very top and sides; the warrior
          is the one big object on the page — grabbable, spinnable,
          floating on the black. */
