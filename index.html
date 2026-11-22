@@ -59,14 +59,16 @@
       .anim-halo { animation: halo-breathe 4.5s ease-in-out infinite; }
       .anim-coin-spin { animation: coin-spin 1.15s linear infinite; transform-style: preserve-3d; }
       .anim-coin-zoom { animation: coin-zoom 0.45s ease both; }
-      .anim-welcome { animation: welcome-flash 1.6s ease both; }
+      .anim-welcome { animation: welcome-flash 0.6s ease both; }
+      .anim-launch-pop { animation: coin-zoom 0.18s ease both; }
+      .anim-launch-flip { animation: coin-spin 0.28s linear 1 both; transform-style: preserve-3d; }
       .anim-glow-breathe { animation: glow-breathe 3.2s ease-in-out infinite; }
       .anim-rail { animation: rail-in 0.25s ease both; }
       .anim-pill-mini { animation: pill-mini-in 0.32s ease both; }
       .anim-hero-float { animation: hero-float 5.2s ease-in-out infinite; }
       .anim-toast-in { animation: toast-in 0.38s cubic-bezier(0.22, 0.9, 0.3, 1) both; }
       @media (prefers-reduced-motion: reduce) {
-        .anim-rise, .anim-pop, .anim-glow, .anim-halo, .anim-coin-spin, .anim-coin-zoom, .anim-welcome, .anim-glow-breathe, .anim-rail, .anim-pill-mini, .anim-hero-float, .anim-toast-in { animation: none; }
+        .anim-rise, .anim-pop, .anim-glow, .anim-halo, .anim-coin-spin, .anim-coin-zoom, .anim-welcome, .anim-launch-pop, .anim-launch-flip, .anim-glow-breathe, .anim-rail, .anim-pill-mini, .anim-hero-float, .anim-toast-in { animation: none; }
       }
 
       /* !Weather pass: cards sit flatter and quieter on the black —
@@ -141,7 +143,12 @@
       .launch-picker { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
       .launch-grid-wrap { margin-top: 48px; }
       .launch-featured { pointer-events: none; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-      .launch-featured-name { margin-top: 20px; font-size: 17px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.18em; transition: opacity 0.2s; }
+      .launch-featured-name { margin-top: 20px; font-size: 17px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.18em; transition: opacity 0.15s; }
+      /* No giveaway: a launch cell is fully invisible — no rim, no
+         label — until its icon lands, when rim, icon and label
+         fade/scale in together. */
+      .launch-cell { opacity: 0; transform: scale(0.88); transition: opacity 0.25s ease, transform 0.25s ease; }
+      .launch-cell.landed { opacity: 1; transform: scale(1); }
 
       /* ---------- hub ---------- */
       .hub { position: relative; z-index: 10; margin: -20px -20px 0; display: flex; min-height: calc(100dvh - 16px); flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
@@ -1840,24 +1847,24 @@
         ui.launchPhase = "coins";
         render();
       };
-      var t = window.setTimeout(done, 1650);
+      var t = window.setTimeout(done, 620);
       var el = document.getElementById("flash-overlay");
       if (el) el.addEventListener("click", function () { window.clearTimeout(t); done(); });
     }
 
     /* ---------------- coin launch ---------------- */
-    /* The five tiles arrive ONE AT A TIME: each tile FLASHES in
-       large at center-screen with its name under it, the stealth
-       mark SPINS inside the rim, then the tile flies into its slot
-       in the hub's 2-2-1 grid — played ON the hub's wallpaper, so
-       the fade onto the real hub at the end changes nothing behind
-       the tiles. Tapping skips straight to the hub. */
+    /* FAST, no giveaway: the whole launch lands in ~3 seconds.
+       Each tile POPS in large at center-screen (~0.5s per icon),
+       does ONE fast flip, then flies into its slot in the hub's
+       2-2-1 grid — played ON the hub's wallpaper. Before an icon's
+       turn its tile is COMPLETELY invisible (no rim, no label);
+       the rim and label fade/scale in together with the icon as
+       it lands. Tapping skips straight to the hub. */
     var FEATURED_SIZE = 170;
     var launch = null;
     function coinLaunchHTML() {
       var grid = hubGridHTML(function (def, i) {
-        return '<span class="hub-cell"><span class="hub-tile-size" data-slot="' + i + '">' +
-          hubTileFrameHTML(def, "") + "</span>" +
+        return '<span class="hub-cell launch-cell" data-cell="' + i + '"><span class="hub-tile-size" data-slot="' + i + '"></span>' +
           '<span class="hub-label">' + esc(def.name) + "</span></span>";
       });
       return '<div class="launch-overlay" id="launch-overlay" role="presentation">' +
@@ -1890,15 +1897,15 @@
         launchLater(function () {
           var ov = document.getElementById("launch-overlay");
           if (ov) ov.classList.add("leaving");
-        }, 300);
-        launchLater(finishLaunch, 680);
+        }, 120);
+        launchLater(finishLaunch, 380);
         return;
       }
       var def = TRACKERS[launch.current];
       var feat = document.getElementById("launch-featured");
       if (!feat) return;
-      feat.innerHTML = '<span id="launch-featured-coin" style="display:block"><span class="anim-coin-zoom" style="display:block;width:' + FEATURED_SIZE + "px;height:" + FEATURED_SIZE + 'px;perspective:600px">' +
-        hubTileFrameHTML(def, '<span class="anim-coin-spin" style="position:absolute;inset:0;display:block">' + hubTileImgHTML(def) + "</span>") + "</span></span>" +
+      feat.innerHTML = '<span id="launch-featured-coin" style="display:block"><span class="anim-launch-pop" style="display:block;width:' + FEATURED_SIZE + "px;height:" + FEATURED_SIZE + 'px;perspective:600px">' +
+        hubTileFrameHTML(def, '<span class="anim-launch-flip" style="position:absolute;inset:0;display:block">' + hubTileImgHTML(def) + "</span>") + "</span></span>" +
         '<span class="launch-featured-name" id="launch-featured-name" style="color:' + def.rim + '">' + esc(def.name) + "</span>";
       launchLater(function () {
         var slot = document.querySelector('[data-slot="' + launch.current + '"]');
@@ -1910,12 +1917,12 @@
           var dy = s.top + s.height / 2 - (f.top + f.height / 2);
           var scale = s.width / Math.max(1, f.width);
           coin.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + scale + ")";
-          coin.style.transition = "transform 560ms cubic-bezier(0.22, 0.9, 0.3, 1)";
+          coin.style.transition = "transform 240ms cubic-bezier(0.22, 0.9, 0.3, 1)";
         }
         var nm = document.getElementById("launch-featured-name");
         if (nm) nm.style.opacity = "0";
-        launchLater(dockCoin, 580);
-      }, 1250);
+        launchLater(dockCoin, 260);
+      }, 180);
     }
     function dockCoin() {
       if (!launch) return;
@@ -1923,6 +1930,8 @@
       var def = TRACKERS[idx];
       var slot = document.querySelector('[data-slot="' + idx + '"]');
       if (slot) slot.innerHTML = hubTileFrameHTML(def, hubTileImgHTML(def));
+      var cell = document.querySelector('[data-cell="' + idx + '"]');
+      if (cell) cell.classList.add("landed");
       var feat = document.getElementById("launch-featured");
       if (feat) feat.innerHTML = "";
       launch.docked = idx + 1;
