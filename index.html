@@ -502,14 +502,18 @@
       .entry-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
       .entry-frame { position: relative; width: min(100%, 56.49dvh); aspect-ratio: 1184 / 2096; transition: opacity 700ms ease; }
       .entry-frame > img.art { position: absolute; inset: 0; height: 100%; width: 100%; object-fit: cover; user-select: none; display: block; }
-      /* Resting on the wing the glyphs are PAINTED ON: faded back
-         (reduced opacity, slightly greyed white, NO drop shadow)
-         so they blend into the wing surface like worn painted
-         markings instead of bright stickers stuck on top. The
-         flying copies (.entry-fly) stay full-strength white —
-         they lift off the surface. */
-      .entry-glyph { position: absolute; display: block; aspect-ratio: 1; opacity: 0.8; }
-      .entry-glyph svg { display: block; width: 100%; height: 100%; }
+      /* Resting on the wing the glyphs are PAINTED ON: solid and
+         clear in the middle at near-full strength (opacity 0.95,
+         slightly greyed white, NO blur, NO drop shadow), with
+         only their EDGES eroding away like worn paint — that
+         edge erosion lives in the glyph SVG itself (see
+         wingGlyphSVG), not in a uniform blur or a low overall
+         opacity here. They still sit in the wing like paint,
+         not bright stickers stuck on top. The flying copies
+         (.entry-fly) stay full-strength white — they lift off
+         the surface. */
+      .entry-glyph { position: absolute; display: block; aspect-ratio: 1; opacity: 0.95; filter: none; }
+      .entry-glyph svg { display: block; width: 100%; height: 100%; filter: none; }
       .entry-fly { position: absolute; left: 0; top: 0; display: block; will-change: transform, opacity; }
       .entry-fly svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
       .entry-arrive-pill { position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.55); padding: 4px 14px; box-shadow: 0 10px 15px rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
@@ -1452,9 +1456,43 @@
     function wingGlyphSVG(id, size, painted) {
       /* Painted-on copies (the ones resting on the wing) use a
          slightly greyed white so the paint reads weathered into
-         the surface; flying copies stay pure white. */
+         the surface; flying copies stay pure white.
+         WORN-PAINT EDGES, in miniature — the same language as
+         the stripes: NOT a uniform blur and NOT a low overall
+         opacity. The centre of each glyph stays solid and
+         clear; only its edges thin and erode away. That is
+         done with (1) a radial mask that holds full strength
+         through the middle (52%) and only fades in the outer
+         band, down to near-nothing at the very rim, and (2) a
+         turbulence displacement (no Gaussian blur anywhere)
+         that roughens the silhouette so the fade breaks up
+         irregularly like paint wearing off, instead of a
+         smooth soft edge. Each glyph gets its own seed so
+         the wear pattern differs per mark. */
       var fill = painted ? "#e9ebee" : "#ffffff";
-      return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" fill="' + fill + '" aria-hidden="true" style="display:block">' + (WING_GLYPHS[id] || "") + "</svg>";
+      var paths = WING_GLYPHS[id] || "";
+      if (!painted) {
+        return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" fill="' + fill + '" aria-hidden="true" style="display:block">' + paths + "</svg>";
+      }
+      var seeds = { faith: 7, finance: 14, fitness: 23, family: 32, fun: 41 };
+      var seed = seeds[id] || 9;
+      var gid = "wfg-" + id;
+      var mid = "wfm-" + id;
+      var fid = "wfe-" + id;
+      return '<svg viewBox="0 0 48 48" width="' + size + '" height="' + size + '" fill="' + fill + '" aria-hidden="true" style="display:block">' +
+        "<defs>" +
+        '<radialGradient id="' + gid + '" cx="50%" cy="50%" r="68%">' +
+        '<stop offset="0%" stop-color="#ffffff" stop-opacity="1" />' +
+        '<stop offset="52%" stop-color="#ffffff" stop-opacity="1" />' +
+        '<stop offset="76%" stop-color="#ffffff" stop-opacity="0.94" />' +
+        '<stop offset="90%" stop-color="#ffffff" stop-opacity="0.52" />' +
+        '<stop offset="100%" stop-color="#ffffff" stop-opacity="0.14" />' +
+        "</radialGradient>" +
+        '<filter id="' + fid + '" x="-12%" y="-12%" width="124%" height="124%"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="2" seed="' + seed + '" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G" /></filter>' +
+        '<mask id="' + mid + '" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="48"><rect x="0" y="0" width="48" height="48" fill="url(#' + gid + ')" /></mask>' +
+        "</defs>" +
+        '<g mask="url(#' + mid + ')"><g filter="url(#' + fid + ')">' + paths + "</g></g>" +
+        "</svg>";
     }
     /* The five glyphs rest on the jet's right wing as SMALL
        markings — each only ~4.4% of the frame wide — in one even
