@@ -586,8 +586,34 @@
       .verse-block .v-ref { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: var(--gold); }
       .step-progress { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
       .step-progress .sp-bars { display: flex; gap: 6px; }
-      .step-progress .sp-bar { height: 10px; width: 28px; border-radius: 999px; background: var(--track); }
+      .step-progress .sp-bar { height: 10px; flex: 1 1 0; min-width: 8px; border-radius: 999px; background: var(--track); }
       .step-progress .sp-bar.on { background: var(--gold); }
+
+      /* ---------- check rewards (Elias, 2026-11-22) ----------
+         The reward ladder, fastest first: a per-check micro-pop
+         (box pops, a burst ring in the Faith red, a subtle ripple
+         of brightness through the row — small, fast, never blocks
+         the next check; unchecking stays quiet), then the
+         full-day-set flourish (the warrior steps forward with a
+         glow pulse and a brief Day Complete banner). Piece earned
+         keeps its toast; its reward is the sound + the gold. */
+      .task-row.just-checked .check-box { animation: check-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.5), check-burst 0.55s ease-out; }
+      @keyframes check-pop { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+      @keyframes check-burst { 0% { box-shadow: 0 0 0 0 rgba(237,85,90,0.55); } 100% { box-shadow: 0 0 0 16px rgba(237,85,90,0); } }
+      .task-row.just-checked { animation: row-ripple 0.55s ease-out; }
+      @keyframes row-ripple { 0% { filter: brightness(1.35); } 100% { filter: brightness(1); } }
+      .warrior-hero.day-complete .warrior-img-wrap { animation: hero-advance 1.4s cubic-bezier(0.25, 0.8, 0.3, 1); }
+      @keyframes hero-advance { 0% { transform: translateX(-50%) scale(1); filter: brightness(1); } 30% { transform: translateX(-50%) scale(1.07) translateY(-4px); filter: brightness(1.28) drop-shadow(0 0 22px rgba(212,175,55,0.45)); } 100% { transform: translateX(-50%) scale(1); filter: brightness(1); } }
+      .day-complete-banner { position: absolute; left: 50%; bottom: 12px; z-index: 3; transform: translateX(-50%); pointer-events: none; text-align: center; border-radius: 999px; background: rgba(8,8,10,0.85); border: 1px solid rgba(212,175,55,0.55); padding: 10px 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.55); animation: day-banner 2.1s ease forwards; }
+      .day-complete-banner span { display: block; font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; color: var(--gold); }
+      .day-complete-banner small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.85); }
+      @keyframes day-banner { 0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.92); } 12% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.98); } }
+      .sound-toggle { flex-shrink: 0; border-radius: 999px; border: 1px solid var(--border); background: var(--track); padding: 6px 16px; font-size: 12px; font-weight: 900; letter-spacing: 0.08em; color: #fff; }
+      .sound-toggle[aria-pressed="true"] { background: var(--mint); border-color: var(--mint); color: #000; }
+      @media (prefers-reduced-motion: reduce) {
+        .task-row.just-checked .check-box, .task-row.just-checked, .warrior-hero.day-complete .warrior-img-wrap { animation: none !important; }
+        .day-complete-banner { display: none; }
+      }
       .step-progress .sp-text { font-size: 12px; font-weight: 900; color: var(--gold); }
       .btn-gold { display: block; width: 100%; border-radius: 999px; background: var(--gold); color: #000; font-weight: 900; padding: 16px; font-size: 16px; text-align: center; margin-top: 24px; }
       .btn-gold:active { transform: scale(0.98); }
@@ -858,38 +884,55 @@
     };
     var SECTIONS = ["morning", "anytime", "evening"];
 
+    /* The 90-day armor build, FRONT-LOADED (Elias, 2026-11-22):
+       the armor itself takes the full 90 days — that's the habit
+       window. Daily earning is unchanged (10 XP a task, a build
+       step every 3 tasks = 30 XP), but the piece thresholds curve:
+       the first pieces land fast (about days 2, 5, 9, 15) so a new
+       man gets quick wins while the habit forms, then the gaps
+       widen steadily to the habit pace, and the full armor stands
+       around day 90 (2,700 XP). Steps per piece therefore vary —
+       pieceSteps() below is the source of truth, never a constant. */
     var LEVELS = [
       { level: 1, piece: "The Man", name: "The Undersuit", verse: "Ephesians 6:10 — Be strong in the Lord", xp: 0 },
-      { level: 2, piece: "Shoes of the Gospel of Peace", name: "Boots On", verse: "Ephesians 6:15", xp: 90 },
-      { level: 3, piece: "Belt of Truth", name: "Truth Buckled", verse: "Ephesians 6:14", xp: 180 },
+      { level: 2, piece: "Shoes of the Gospel of Peace", name: "Boots On", verse: "Ephesians 6:15", xp: 60 },
+      { level: 3, piece: "Belt of Truth", name: "Truth Buckled", verse: "Ephesians 6:14", xp: 150 },
       { level: 4, piece: "Leg Armor", name: "Greaves Locked", verse: "Ephesians 6:14 — Stand therefore", xp: 270 },
-      { level: 5, piece: "Breastplate of Righteousness", name: "Heart Guarded", verse: "Ephesians 6:14", xp: 360 },
-      { level: 6, piece: "Arm Armor & Pauldrons", name: "Arms Armored", verse: "Isaiah 59:17", xp: 450 },
-      { level: 7, piece: "Shield of Faith", name: "Shield Raised", verse: "Ephesians 6:16", xp: 540 },
-      { level: 8, piece: "Helmet of Salvation", name: "Mind Covered", verse: "Ephesians 6:17", xp: 630 },
-      { level: 9, piece: "Sword of the Spirit", name: "Sword Drawn", verse: "Ephesians 6:17 — the Word of God", xp: 720 },
-      { level: 10, piece: "Plume, Cape & Full Gold", name: "The Complete Warrior", verse: "Ephesians 6:11 — the whole armor of God", xp: 810 }
+      { level: 5, piece: "Breastplate of Righteousness", name: "Heart Guarded", verse: "Ephesians 6:14", xp: 450 },
+      { level: 6, piece: "Arm Armor & Pauldrons", name: "Arms Armored", verse: "Isaiah 59:17", xp: 690 },
+      { level: 7, piece: "Shield of Faith", name: "Shield Raised", verse: "Ephesians 6:16", xp: 990 },
+      { level: 8, piece: "Helmet of Salvation", name: "Mind Covered", verse: "Ephesians 6:17", xp: 1380 },
+      { level: 9, piece: "Sword of the Spirit", name: "Sword Drawn", verse: "Ephesians 6:17 — the Word of God", xp: 1830 },
+      { level: 10, piece: "Plume, Cape & Full Gold", name: "The Complete Warrior", verse: "Ephesians 6:11 — the whole armor of God", xp: 2700 }
     ];
     var LEVEL_XP = LEVELS.map(function (l) { return l.xp; });
     var XP_PER_TASK = 10;
     var TASKS_PER_STEP = 3;
     var STEP_XP = TASKS_PER_STEP * XP_PER_TASK;
-    var STEPS_PER_PIECE = 3;
-    var ARMOR_COMPLETE_XP = 810;
+    var ARMOR_COMPLETE_XP = 2700;
+    /* Build steps in the piece that ENDS at `level` (2–10): its
+       XP span in steps. Front-loaded, so 2 steps for the first
+       piece and 29 for the last. */
+    function pieceSteps(level) {
+      if (level < 2 || level > LEVELS.length) return 0;
+      return Math.round((LEVELS[level - 1].xp - LEVELS[level - 2].xp) / STEP_XP);
+    }
+    /* One step a day at the baseline rhythm × 90 days. */
+    var TOTAL_BUILD_STEPS = Math.round(ARMOR_COMPLETE_XP / STEP_XP);
 
     var STRONGHOLD_PARTS = [
-      { part: 1, name: "Foundation", xp: 900 },
-      { part: 2, name: "Walls", xp: 990 },
-      { part: 3, name: "Gate", xp: 1080 },
-      { part: 4, name: "Towers", xp: 1170 },
-      { part: 5, name: "Keep", xp: 1260 },
-      { part: 6, name: "Battlements", xp: 1350 },
-      { part: 7, name: "Banner", xp: 1440 },
-      { part: 8, name: "Armory", xp: 1530 },
-      { part: 9, name: "Chapel", xp: 1620 },
-      { part: 10, name: "Stronghold Complete", xp: 1710 }
+      { part: 1, name: "Foundation", xp: 2970 },
+      { part: 2, name: "Walls", xp: 3240 },
+      { part: 3, name: "Gate", xp: 3510 },
+      { part: 4, name: "Towers", xp: 3780 },
+      { part: 5, name: "Keep", xp: 4050 },
+      { part: 6, name: "Battlements", xp: 4320 },
+      { part: 7, name: "Banner", xp: 4590 },
+      { part: 8, name: "Armory", xp: 4860 },
+      { part: 9, name: "Chapel", xp: 5130 },
+      { part: 10, name: "Stronghold Complete", xp: 5400 }
     ];
-    var STRONGHOLD_COMPLETE_XP = 1710;
+    var STRONGHOLD_COMPLETE_XP = 5400;
 
     var PIECE_DETAILS = {
       1: { title: "The Undersuit — The Man Himself",
@@ -1030,8 +1073,8 @@
         hubIcon: "data:image/webp;base64,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", rim: "#ED555A",
         heroAspect: "aspect-ratio:2/3", heroFit: "contain",
         tint: "#ED555A",
-        promise: "Put on the whole armor of God — one day, one task, one piece at a time.",
-        journeyTitle: "The Armor — 10 levels",
+        promise: "Ninety days to build the habit — and put on the whole armor of God, one day, one task, one piece at a time.",
+        journeyTitle: "The Armor — 10 levels over 90 days",
         journey: [], tasks: [], bullets: []
       },
       {
@@ -1163,7 +1206,7 @@
 
     /* ---------------- in-browser store (replaces server actions) ---------------- */
     var STORE_KEY = "traker-web-copy-v1";
-    var store = { profile: null, completions: {}, checkins: {} };
+    var store = { profile: null, completions: {}, checkins: {}, settings: { sound: true } };
     function loadStore() {
       try {
         var raw = window.localStorage.getItem(STORE_KEY);
@@ -1173,6 +1216,7 @@
             store.profile = parsed.profile || null;
             store.completions = parsed.completions || {};
             store.checkins = parsed.checkins || {};
+            store.settings = { sound: !(parsed.settings && parsed.settings.sound === false) };
           }
         }
       } catch (e) { /* storage unavailable — run in-memory */ }
@@ -1324,8 +1368,67 @@
     }
 
     function resetAll() {
-      store = { profile: null, completions: {}, checkins: {} };
+      var keepSound = soundOn();
+      store = { profile: null, completions: {}, checkins: {}, settings: { sound: keepSound } };
       saveStore();
+    }
+
+    /* ---------------- sound (WebAudio, synthesized) ----------------
+       Quiet, tactile UI sounds in the !Weather spirit — premium
+       and subtle, never arcade-like. No audio files: every sound
+       is synthesized on the spot at low volume. Default ON; the
+       Profile toggle stores the choice. Where the platform
+       supports it, the ambient audio session leaves the phone's
+       silent switch in charge. The one context is created and
+       resumed inside the tap handler, so iOS never stays muted. */
+    var audioCtx = null;
+    function soundOn() { return !(store.settings && store.settings.sound === false); }
+    function ensureAudio() {
+      if (!soundOn()) return null;
+      try { if (navigator.audioSession) navigator.audioSession.type = "ambient"; } catch (e) { /* unsupported — volumes stay low regardless */ }
+      try {
+        if (!audioCtx) {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          audioCtx = new AC();
+        }
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        return audioCtx;
+      } catch (e) { return null; }
+    }
+    function tone(ctx, freqFrom, freqTo, startIn, dur, peak, type) {
+      var t0 = ctx.currentTime + startIn;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freqFrom, t0);
+      if (freqTo !== freqFrom) osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqTo), t0 + dur);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    }
+    /* Per-check: one soft tick/pop. */
+    function playCheckSound() {
+      var ctx = ensureAudio(); if (!ctx) return;
+      tone(ctx, 620, 940, 0, 0.09, 0.055, "triangle");
+    }
+    /* Full day's set: a warmer two-note landing. */
+    function playDaySound() {
+      var ctx = ensureAudio(); if (!ctx) return;
+      tone(ctx, 659, 659, 0, 0.32, 0.065, "sine");
+      tone(ctx, 880, 880, 0.09, 0.45, 0.065, "sine");
+    }
+    /* Piece earned: the fuller moment — a small rising motif. */
+    function playPieceSound() {
+      var ctx = ensureAudio(); if (!ctx) return;
+      tone(ctx, 523, 523, 0, 0.4, 0.075, "triangle");
+      tone(ctx, 659, 659, 0.08, 0.45, 0.075, "triangle");
+      tone(ctx, 784, 784, 0.16, 0.6, 0.085, "triangle");
+      tone(ctx, 1047, 1047, 0.24, 0.75, 0.05, "sine");
     }
 
     /* ---------------- icons ---------------- */
@@ -1938,6 +2041,8 @@
       pieceSheet: null,           // level number or null
       selectedStronghold: null,
       toggleError: null,
+      justChecked: null,           // task id riding the micro-pop
+      dayCompleteAt: 0,            // timestamp of the day-set flourish
       confirmReset: false,
       heroLevelSeen: null,
       spinHintGone: false,
@@ -2237,7 +2342,7 @@
         '<img class="faith-hero-img anim-hero-float" src="' + TRACKERS[0].image + '" alt="The faithful warrior in the complete armor of God" draggable="false" />' +
         '<span class="tap-chip">👆 Tap to spin &amp; zoom</span></button>' +
         '<div class="faith-landing-bottom"><h1>The Faithful Warrior</h1>' +
-        "<p>This is where the road leads.</p>" +
+        "<p>This is where the road leads — 90 days to build the habit, and the armor.</p>" +
         '<button type="button" class="btn-white" data-act="faith-enter">Enter the Fight</button></div></div>';
     }
 
@@ -2362,10 +2467,11 @@
       }
       var views = spinViews(stats.level);
       var showHint = !ui.spinHintGone;
-      // Build progress as scrubber steps: 3 steps per piece × 10 pieces.
-      var stepsIntoPiece = complete ? STEPS_PER_PIECE : Math.min(STEPS_PER_PIECE, Math.floor(stats.xpIntoLevel / STEP_XP));
-      var buildStepsFilled = (stats.level - 1) * STEPS_PER_PIECE + stepsIntoPiece;
-      var buildStepsTotal = LEVELS.length * STEPS_PER_PIECE;
+      // Build progress as scrubber steps: 90 steps across the
+      // whole 90-day armor build (front-loaded pieces, so the
+      // steps are counted globally, not per piece).
+      var buildStepsTotal = TOTAL_BUILD_STEPS;
+      var buildStepsFilled = Math.min(buildStepsTotal, Math.floor(stats.xp / STEP_XP));
 
       var html = '<div class="anim-rise armor-home">';
       /* Hero block: bleeds to the very top and sides; the warrior
@@ -2421,7 +2527,7 @@
 
       /* The build scrubber: one dot per build step across the whole armor. */
       html += '<div class="build-scrubber-wrap">' +
-        dotScrubberHTML(buildStepsTotal, buildStepsFilled, "#d4af37", "Build progress: " + buildStepsFilled + " of " + buildStepsTotal + " steps built") +
+        dotScrubberHTML(buildStepsTotal, buildStepsFilled, "#d4af37", "Build progress: " + buildStepsFilled + " of " + buildStepsTotal + " steps built", 3) +
         '<div class="build-scrubber-labels"><span class="bsl-1">The Build</span><span class="bsl-2">' + buildStepsFilled + "/" + buildStepsTotal + " steps</span></div></div>";
       html += "</div>"; /* close #home-reveal */
       html += "</div>"; /* close .anim-rise */
@@ -2448,8 +2554,9 @@
        used to call, so TODAY, XP, level-ups, build steps, and
        the streak land exactly as before. At the bottom, THE
        ARMOR list: all ten pieces with their verses and the XP
-       each takes (90 XP a piece, cumulative 90…810), earned lit
-       in gold, locked dimmed with the points still needed. The
+       each takes (front-loaded thresholds across the 90 days),
+       earned lit in gold, locked dimmed with the points still
+       needed. The
        one quiet link still closes the page, for everything else
        Armor Detail holds. */
     function warriorPageHTML(data) {
@@ -2469,9 +2576,11 @@
       /* The warrior — STILL: no spin, no zoom, no physics on
          this page. He just stands over the day, on the same grey
          halo as everywhere else. */
-      html += '<div class="warrior-hero"><span class="hero-halo anim-halo"></span><span class="hero-pool"></span>' +
+      var dayFresh = ui.dayCompleteAt && (Date.now() - ui.dayCompleteAt < 2200);
+      html += '<div class="warrior-hero' + (dayFresh ? " day-complete" : "") + '"><span class="hero-halo anim-halo"></span><span class="hero-pool"></span>' +
         '<span class="warrior-img-wrap" style="aspect-ratio:' + (level >= 10 ? "2/3" : "1/2") + '">' +
-        '<img src="' + levelImage(level) + '" alt="Level ' + level + " — " + esc(levelDef.piece) + '" draggable="false" style="filter:' + heroFilterForLevel(level) + '" /></span></div>' +
+        '<img src="' + levelImage(level) + '" alt="Level ' + level + " — " + esc(levelDef.piece) + '" draggable="false" style="filter:' + heroFilterForLevel(level) + '" /></span>' +
+        (dayFresh ? '<div class="day-complete-banner" aria-hidden="true"><span>Day complete</span><small>Today\'s build step landed</small></div>' : "") + "</div>" +
         '<p class="warrior-level-line">Level ' + level + " · " + esc(levelDef.piece) + "</p>";
 
       /* Today's check-ins — Morning / Anytime / Evening, each
@@ -2499,7 +2608,7 @@
         html += '<div class="task-rows">' + tasks.map(function (t) {
           var done = !!doneSet[t.id];
           var tint = TASK_TINTS[t.id] || { fg: meta.color, chip: "#2b2e34" };
-          return '<button type="button" class="task-row' + (done ? " done" : "") + '" role="checkbox" aria-checked="' + done + '" aria-label="' + esc(t.label) + " — " + esc(t.detail) + '" data-act="toggle-task" data-id="' + t.id + '" data-done="' + done + '">' +
+          return '<button type="button" class="task-row' + (done ? " done" : "") + (ui.justChecked === t.id ? " just-checked" : "") + '" role="checkbox" aria-checked="' + done + '" aria-label="' + esc(t.label) + " — " + esc(t.detail) + '" data-act="toggle-task" data-id="' + t.id + '" data-done="' + done + '">' +
             '<span class="task-icon-chip" style="color:' + tint.fg + ";background-color:" + tint.chip + ";box-shadow:0 0 16px " + tint.fg + '2e">' + taskIcon(t.id) + "</span>" +
             '<span class="tr-text"><span class="tr-label">' + esc(t.label) + '</span><span class="tr-detail">' + esc(t.detail) + "</span></span>" +
             '<span style="display:flex;flex-shrink:0;align-items:center;gap:8px"><span class="tr-xp">+' + XP_PER_TASK + ' XP</span>' +
@@ -2510,11 +2619,11 @@
       html += "</div>";
 
       /* The armor — all ten pieces at the bottom: name, the
-         verse that goes with it, and what it takes — 90 XP a
-         piece, the target shown plainly (cumulative 90…810).
-         Earned pieces stand lit in gold; locked ones are dimmed
-         and show the points still needed. */
-      html += '<div class="wp-armor"><h2 class="kicker" style="margin:0">The Armor — 90 XP a piece</h2><div style="margin-top:4px">' +
+         verse that goes with it, and what it takes — the
+         front-loaded 90-day thresholds, shown plainly as each
+         piece's target XP. Earned pieces stand lit in gold;
+         locked ones are dimmed and show the points still needed. */
+      html += '<div class="wp-armor"><h2 class="kicker" style="margin:0">The Armor — built over 90 days</h2><div style="margin-top:4px">' +
         LEVELS.map(function (def) {
           var earned = stats.level >= def.level;
           var needed = Math.max(0, def.xp - stats.xp);
@@ -2606,24 +2715,27 @@
 
     /* The 90-day journey card — shared by Armor Detail and
        Insights (Elias, 2026-11-22: the armor journey card
-       also lives on the Insights tab): Day X of 90, the
-       journey bar with its Day 30/60 ticks, the Day 30/60/90
-       lines, the ten tappable level thumbnails, and the
-       armor-pace note. */
+       also lives on the Insights tab). The 90-day journey IS
+       the armor journey: 90 days to build the habit of
+       consistency and the armor with it, front-loaded — quick
+       wins first, then the widening habit pace. Day X of 90,
+       the journey bar with its Day 30/60 ticks, the three
+       stretches and what each is for, armor progress, the ten
+       tappable level thumbnails, and the pace note. The full
+       journey detail lives here in Insights; Home stays
+       status-only. */
     function journeyCardHTML(data) {
       var stats = data.stats;
       var journeyDay = data.profile ? Math.max(1, daysBetween(data.profile.onboardedDay, TODAY) + 1) : 1;
-      var strongholdDone = STRONGHOLD_PARTS.filter(function (p) { return stats.xp >= p.xp; }).length;
       var complete = stats.level >= 10;
       var card = "";
       card += '<div class="journey-card"><div class="journey-head"><span class="j1">Your 90-day journey</span><span class="j2">Day ' + Math.min(journeyDay, 90) + " of 90</span></div>" +
         '<div class="journey-bar"><div class="fill" style="width:' + Math.min(100, (journeyDay / 90) * 100) + '%"></div>' +
         [30, 60].map(function (d) { return '<span class="tick" style="left:' + ((d / 90) * 100) + '%"></span>'; }).join("") + "</div>" +
         '<div class="journey-lines">' +
-        '<p class="' + (complete ? "done" : "") + '">Day 30 — Full Armor ' + (complete ? "· Complete ✓" : "· " + stats.level + "/10 pieces") + "</p>" +
-        '<p class="' + (strongholdDone >= STRONGHOLD_PARTS.length ? "done" : "") + '">Day 60 — The Stronghold ' +
-        (strongholdDone >= STRONGHOLD_PARTS.length ? "· Complete ✓" : complete ? "· " + strongholdDone + "/10 parts built" : "· begins when the armor stands") + "</p>" +
-        '<p class="dim">Day 90 — Phase 3 · still being chosen</p></div>' +
+        '<p class="' + (journeyDay >= 30 ? "done" : "") + '">Days 1–30 — Quick Wins · the first pieces land fast while the habit forms · ' + stats.level + "/10 pieces</p>" +
+        '<p class="' + (journeyDay >= 60 ? "done" : "") + '">Days 31–60 — The Habit Pace · the gaps widen, the rhythm holds · ' + stats.level + "/10 pieces</p>" +
+        '<p class="' + (complete ? "done" : "") + '">Day 90 — Full Armor ' + (complete ? "· Complete ✓" : "· " + stats.level + "/10 pieces") + "</p></div>" +
         '<div class="stage-grid" role="img" aria-label="The build in ten stages — the man in his undersuit, then boots, belt, leg armor, breastplate, arm armor, shield, helmet, and sword, ending with the complete warrior in plumed helmet and cape">' +
         LEVELS.map(function (lvDef, i) {
           var lv = i + 1;
@@ -2634,7 +2746,7 @@
             '<span class="stage-num' + (earned ? " earned" : "") + '">' + lv + "</span></button>";
         }).join("") + "</div>" +
         '<p class="detail-foot-note">Tap any level to spin &amp; zoom it in 3D — undersuit to full armor</p>' +
-        '<p class="journey-foot">Armor pace updated: a piece now builds in 3 steps, and any 3 tasks earn a step — something builds every single day.</p></div>';
+        '<p class="journey-foot">Ninety days to build the habit — and the armor. The curve is front-loaded on purpose: the first piece lands in about two days, the next few across the first two weeks, then the gaps widen to the habit pace and the full armor stands around day 90. Any 3 tasks earn a build step, so something builds every single day.</p></div>';
       return card;
     }
 
@@ -2668,7 +2780,8 @@
       var xpPct = nextDef ? Math.min(100, Math.round((stats.xpIntoLevel / xpSpan) * 100)) : 100;
       var stepTasksToday = Math.min(stats.todayDone, TASKS_PER_STEP);
       var stepEarnedToday = stats.todayDone >= TASKS_PER_STEP;
-      var nextStepsBuilt = nextDef ? Math.min(STEPS_PER_PIECE, Math.floor(stats.xpIntoLevel / STEP_XP)) : STEPS_PER_PIECE;
+      var nextPieceSteps = nextDef ? pieceSteps(nextDef.level) : 0;
+      var nextStepsBuilt = nextDef ? Math.min(nextPieceSteps, Math.floor(stats.xpIntoLevel / STEP_XP)) : 0;
       var journeyDay = data.profile ? Math.max(1, daysBetween(data.profile.onboardedDay, TODAY) + 1) : 1;
       var strongholdDone = STRONGHOLD_PARTS.filter(function (p) { return stats.xp >= p.xp; }).length;
       var complete = stats.level >= 10;
@@ -2695,8 +2808,8 @@
         "</div>" +
         (nextDef
           ? '<div style="margin-top:12px">' +
-            dotScrubberHTML(STEPS_PER_PIECE, nextStepsBuilt, "#d4af37", esc(nextDef.piece) + " build progress: step " + nextStepsBuilt + " of " + STEPS_PER_PIECE + " built", 10) +
-            '<p class="xp-scrub-note">' + esc(nextDef.piece) + " builds in " + STEPS_PER_PIECE + " steps — step " + nextStepsBuilt + " of " + STEPS_PER_PIECE + " done.</p></div>"
+            dotScrubberHTML(nextPieceSteps, nextStepsBuilt, "#d4af37", esc(nextDef.piece) + " build progress: step " + nextStepsBuilt + " of " + nextPieceSteps + " built", 10) +
+            '<p class="xp-scrub-note">' + esc(nextDef.piece) + " builds in " + nextPieceSteps + " steps — step " + nextStepsBuilt + " of " + nextPieceSteps + " done.</p></div>"
           : "") +
         '<div class="xp-today-step"><div><p class="xts-k" style="margin:0">Today\'s build step</p><p class="xts-d">' +
         (stepEarnedToday ? "Step earned — something built today." : "Any 3 tasks earn today's step.") + "</p></div>" +
@@ -2720,11 +2833,11 @@
         '<p class="detail-foot-note">' + (nextDef ? "Next piece: " + esc(nextDef.piece) + " — " + nextDef.xp + " XP" : "Every piece earned. Stand firm.") +
         '<span style="display:block">Tap any piece to see its verses and how it fights.</span></p>';
 
-      /* phase 2 */
-      html += '<h2 class="tl-section-title">Phase 2 · Days 31–60 — The Stronghold</h2>';
+      /* after the 90 days */
+      html += '<h2 class="tl-section-title">After the Armor — The Stronghold</h2>';
       if (!complete) {
         html += '<div class="phase-box"><p class="pb-t">The next build waits behind the armor.</p>' +
-          '<p class="pb-d">Once the full armor stands, the Stronghold sequence begins — ten parts, built the same way: 3 steps at a time, one day at a time. Its spin view arrives with the stronghold art.</p></div>';
+          '<p class="pb-d">Once the full armor stands at day 90, the Stronghold sequence begins — ten parts, built the same way: a step at a time, one day at a time. Its spin view arrives with the stronghold art.</p></div>';
       } else {
         var bright = (0.55 + (strongholdDone / 10) * 0.6).toFixed(2);
         html += '<div class="sh-frame" aria-label="Stronghold build — ' + strongholdDone + ' of 10 parts complete">' +
@@ -2746,15 +2859,14 @@
           var p = STRONGHOLD_PARTS[ui.selectedStronghold - 1];
           var pEarned = stats.xp >= p.xp;
           var prevXp = ui.selectedStronghold === 1 ? ARMOR_COMPLETE_XP : STRONGHOLD_PARTS[ui.selectedStronghold - 2].xp;
-          var steps = Math.min(STEPS_PER_PIECE, Math.floor(Math.max(0, stats.xp - prevXp) / STEP_XP));
+          var partSteps = Math.round((p.xp - prevXp) / STEP_XP);
+          var steps = Math.min(partSteps, Math.floor(Math.max(0, stats.xp - prevXp) / STEP_XP));
           html += '<div class="sh-detail anim-rise"><div class="sd-head"><span class="sd-name">Part ' + p.part + " — " + esc(p.name) + "</span>" +
             '<span class="sd-badge' + (pEarned ? " built" : "") + '">' + (pEarned ? "BUILT" : Math.max(0, p.xp - stats.xp) + " XP to go") + "</span></div>" +
-            "<p>" + (pEarned ? "Built and standing." : "Builds in " + STEPS_PER_PIECE + " steps — step " + steps + " of " + STEPS_PER_PIECE + " done. Same rhythm as the armor: any 3 tasks earn a step.") + "</p></div>";
+            "<p>" + (pEarned ? "Built and standing." : "Builds in " + partSteps + " steps — step " + steps + " of " + partSteps + " done. Same rhythm as the armor: any 3 tasks earn a step.") + "</p></div>";
         }
       }
 
-      html += '<div class="phase3-box"><p class="p3-k">Phase 3 · Days 61–90</p>' +
-        '<p class="p3-d">Coming — this stretch of the journey hasn\'t been chosen yet. The slot is saved.</p></div>';
       html += "</div>";
       return html;
     }
@@ -2780,7 +2892,8 @@
       var xpToGo = Math.max(0, def.xp - stats.xp);
       var isBuilding = !earned && level === stats.level + 1;
       var prevXp = (LEVELS[level - 2] || {}).xp || 0;
-      var stepsBuilt = isBuilding ? Math.min(STEPS_PER_PIECE, Math.floor(Math.max(0, stats.xp - prevXp) / STEP_XP)) : 0;
+      var thisPieceSteps = pieceSteps(level);
+      var stepsBuilt = isBuilding ? Math.min(thisPieceSteps, Math.floor(Math.max(0, stats.xp - prevXp) / STEP_XP)) : 0;
 
       var html = '<div class="sheet-overlay" data-act="sheet-backdrop" role="dialog" aria-label="' + esc(detail.title) + ' — piece details"><div class="sheet anim-rise" data-sheet>' +
         '<div class="grab"></div>' +
@@ -2789,9 +2902,11 @@
         "<h2>" + esc(detail.title) + "</h2>" +
         '<p class="sheet-sub">' + esc(def.name) + " · Unlocks at " + def.xp + " XP</p>";
       if (isBuilding) {
+        var barIdx = [];
+        for (var bi = 0; bi < thisPieceSteps; bi++) barIdx.push(bi);
         html += '<div class="step-progress"><span class="sp-bars">' +
-          [0, 1, 2].map(function (i) { return '<span class="sp-bar' + (i < stepsBuilt ? " on" : "") + '"></span>'; }).join("") +
-          '</span><span class="sp-text">Step ' + stepsBuilt + " of " + STEPS_PER_PIECE + " built — any 3 tasks earn a step</span></div>";
+          barIdx.map(function (i) { return '<span class="sp-bar' + (i < stepsBuilt ? " on" : "") + '"></span>'; }).join("") +
+          '</span><span class="sp-text">Step ' + stepsBuilt + " of " + thisPieceSteps + " built — any 3 tasks earn a step</span></div>";
       }
       html += '<div class="sheet-card"><p class="sc-k" style="color:var(--gold)">What it is</p><p class="body">' + esc(detail.whatItIs) + "</p></div>";
       html += '<div class="sheet-card"><p class="sc-k" style="color:var(--lav)">Verses</p>' +
@@ -2894,8 +3009,9 @@
       var whyUnchanged = whyVal.trim() === ((profile ? profile.why : "") || "");
 
       var milestones = [
-        { label: "Phase 1 · Day 30 — Full Armor", current: Math.min(stats.xp, ARMOR_COMPLETE_XP), target: ARMOR_COMPLETE_XP },
-        { label: "Phase 2 · Day 60 — Stronghold Complete", current: Math.min(Math.max(0, stats.xp - ARMOR_COMPLETE_XP), STRONGHOLD_COMPLETE_XP - ARMOR_COMPLETE_XP), target: STRONGHOLD_COMPLETE_XP - ARMOR_COMPLETE_XP },
+        { label: "Days 1–30 · Quick Wins — first pieces, fast", current: Math.min(stats.xp, 900), target: 900 },
+        { label: "Days 31–60 · The Habit Pace", current: Math.min(Math.max(0, stats.xp - 900), 900), target: 900 },
+        { label: "Days 61–90 · Full Armor", current: Math.min(Math.max(0, stats.xp - 1800), 900), target: 900 },
         { label: "7-Day Streak", current: stats.longestStreak, target: 7 },
         { label: "100 Tasks", current: stats.tasksDone, target: 100 }
       ];
@@ -2928,8 +3044,8 @@
           return '<div class="milestone"><div class="m-head"><span class="m-label">' + esc(m.label) + (done ? '<span class="m-check">✓</span>' : "") + '</span><span class="m-count">' + Math.min(m.current, m.target) + "/" + m.target + "</span></div>" +
             '<div class="bar-track m-bar"><div class="' + (done ? "done" : "") + '" style="width:' + pct + '%"></div></div></div>';
         }).join("") + "</div>" +
-        '<div class="phase3-box" style="margin-top:12px"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:900;color:var(--lavdim)">Phase 3 · Day 90</span><span style="border-radius:999px;background:var(--track);padding:4px 12px;font-size:11px;font-weight:900;color:var(--lavdim)">COMING</span></div>' +
-        '<p class="p3-d">Days 61–90 haven\'t been chosen yet. This slot is saved for what comes after the Stronghold.</p></div>';
+        '<div class="phase3-box" style="margin-top:12px"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:900;color:var(--lavdim)">After Day 90 · The Stronghold</span><span style="border-radius:999px;background:var(--track);padding:4px 12px;font-size:11px;font-weight:900;color:var(--lavdim)">NEXT</span></div>' +
+        '<p class="p3-d">Once the full armor stands, the Stronghold builds next — ten parts, same daily rhythm.</p></div>';
 
       html += '<h2 class="tl-section-title">Your Plan</h2><div class="answers-box">' +
         answerRow("Drift Zone", answerText("hardestTime")) +
@@ -2938,6 +3054,11 @@
         answerRow("In the way", answerText("blockers")) +
         answerRow("Daily tasks", (profile ? profile.tasks.length : 0) + " selected") +
         "</div>";
+
+      html += '<div class="card-box" style="margin-top:20px"><p class="kicker" style="margin:0;color:var(--gold)">Sound</p><div class="plan-list">' +
+        '<div class="plan-row-item"><span class="pr-name">UI sounds<span class="pr-tag">Checks · day complete · pieces earned</span></span>' +
+        '<button type="button" class="sound-toggle" data-act="sound-toggle" aria-pressed="' + soundOn() + '" aria-label="Toggle UI sounds">' + (soundOn() ? "ON" : "OFF") + "</button></div></div>" +
+        '<p style="margin:8px 0 0;font-size:12px;font-weight:600;line-height:1.6;color:var(--lavdim)">Quiet, tactile ticks — kept low, and your phone\'s silent switch still rules where the platform allows it.</p></div>';
 
       html += '<div class="danger-card"><h2>Start over</h2><p>Wipes your plan, XP, streak, and check-ins, and runs onboarding again.</p>';
       if (ui.confirmReset) {
@@ -3021,7 +3142,7 @@
         }).join("");
         body = '<div style="display:flex;flex:1;flex-direction:column;justify-content:center"><div class="ob-grid" role="img" aria-label="The same warrior across all ten levels — bare undersuit, then boots, belt, leg armor, breastplate, arm armor, shield, helmet, and sword, ending with the complete warrior in plumed helmet and cape">' + grid + "</div>" +
           '<h1 class="ob-h1" style="margin-top:24px;font-size:30px">Your walk. Visualized.</h1>' +
-          '<p class="ob-sub sm" style="text-align:center">Level 1: a man in an undersuit. Level 10: the complete warrior — plume, cape, and full gold lit. Every 3 tasks build a step, and the full armor stands within 30 days.</p></div>' +
+          '<p class="ob-sub sm" style="text-align:center">Level 1: a man in an undersuit. Level 10: the complete warrior — plume, cape, and full gold lit. Every 3 tasks build a step, the first pieces land in days, and across 90 days the full armor stands — and the habit with it.</p></div>' +
           pillBtn("Let's build", true);
       }
       else if (step === 3) body = hookScreen("It's not a knowledge problem.", "You know the verses. The rhythm is what's missing.", "What do you mean?");
@@ -3053,10 +3174,10 @@
       else if (step === 18) body = eduScreen("3", "#F17834", "Then demolition.", "Strongholds come down through obedience — powered by His strength, not yours. Worship gives the love, the Word gives the light, obedience swings the hammer.", "Continue");
       else if (step === 19) {
         var rows = [
-          { days: "7 days", text: "The rhythm starts — something builds every day", color: "#c9a06b" },
-          { days: "30 days", text: "Phase 1 complete — the full armor stands", color: "#41CD72" },
-          { days: "60 days", text: "Phase 2 complete — the Stronghold is built", color: "#F17834" },
-          { days: "90 days", text: "Phase 3 — the next build, still being chosen", color: "#d4af37" }
+          { days: "7 days", text: "The rhythm starts — the first pieces are already on", color: "#c9a06b" },
+          { days: "30 days", text: "Quick wins banked — the armor is rising, the habit forming", color: "#41CD72" },
+          { days: "60 days", text: "The habit pace — pieces land as the rhythm holds", color: "#F17834" },
+          { days: "90 days", text: "The full armor stands — habit built", color: "#d4af37" }
         ];
         body = '<div style="flex:1"><h1 class="ob-h1 left" style="font-size:30px">Your walk can heal into a rhythm.</h1><div class="timeline">' +
           rows.map(function (row, i) {
@@ -3103,6 +3224,7 @@
           '<div class="plan-summary anim-pop">' +
           planSummaryRow("Drift Zone", String(ob.answers["hardestTime"] || "—"), "#ED555A") +
           planSummaryRow("Primary Goal", String(ob.answers["primaryGoal"] || "—"), "#d4af37") +
+          planSummaryRow("Journey", "90 days — the full armor", "#F17834") +
           planSummaryRow("Daily Tasks", ob.pickedTasks.length + " selected", "#41CD72") +
           planSummaryRow("Support", "24/7 Active", "#c9a06b") +
           "</div>" +
@@ -3299,6 +3421,20 @@
           try {
             var res = toggleTask(TODAY, taskId, !done);
             ui.toggleError = null;
+            /* The reward ladder (Elias, 2026-11-22): checking a
+               box fires the micro-pop + the soft tick; completing
+               the day's FULL set fires the warrior flourish + the
+               warmer tone; earning a piece fires the fuller motif
+               (its toast follows below). Unchecking stays quiet. */
+            if (!done) {
+              ui.justChecked = taskId;
+              window.setTimeout(function () { if (ui.justChecked === taskId) ui.justChecked = null; }, 700);
+              var dayJustDone = res.stats.todayTotal > 0 && res.stats.todayDone >= res.stats.todayTotal && beforeStats.todayDone < beforeStats.todayTotal;
+              if (dayJustDone) ui.dayCompleteAt = Date.now();
+              if (res.leveledUpTo !== null) playPieceSound();
+              else if (dayJustDone) playDaySound();
+              else playCheckSound();
+            }
             if (res.leveledUpTo !== null) {
               var lvDef = LEVELS[res.leveledUpTo - 1] || LEVELS[0];
               pendingToast = {
@@ -3315,11 +3451,12 @@
               var stepBefore = Math.floor(beforeStats.xpIntoLevel / STEP_XP);
               var stepAfter = Math.floor(res.stats.xpIntoLevel / STEP_XP);
               var pieceDef = LEVELS[beforeStats.level];
+              var forgeSteps = pieceSteps(beforeStats.level + 1);
               if (res.stats.level === beforeStats.level && stepAfter > stepBefore) {
                 pendingToast = {
                   kicker: "Build step",
                   title: "Build step complete",
-                  sub: pieceDef ? pieceDef.piece + " — step " + Math.min(stepAfter, STEPS_PER_PIECE) + " of " + STEPS_PER_PIECE + " built" : "",
+                  sub: pieceDef ? pieceDef.piece + " — step " + Math.min(stepAfter, forgeSteps) + " of " + forgeSteps + " built" : "",
                   tint: "#d4af37"
                 };
               } else if (beforeStats.todayDone < TASKS_PER_STEP && res.stats.todayDone >= TASKS_PER_STEP) {
@@ -3362,6 +3499,13 @@
           ui.toast = null;
           if (ui.toastTimer) { window.clearTimeout(ui.toastTimer); ui.toastTimer = null; }
           renderOverlays(); break;
+        case "sound-toggle": {
+          store.settings = { sound: !soundOn() };
+          saveStore();
+          if (soundOn()) playCheckSound();
+          render();
+          break;
+        }
         case "why-save": {
           var whyEl = document.getElementById("profile-why");
           var val = whyEl ? whyEl.value : (ui.whyDraft || "");
